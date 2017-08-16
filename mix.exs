@@ -21,7 +21,10 @@ defmodule ChromeRemoteInterface.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:poison, "~> 3.1"}
+      {:poison, "~> 3.1"},
+      {:httpipe_adapters_hackney, "~> 0.9"},
+      {:httpipe, "~> 0.9"},
+      {:websockex, "~> 0.4.0"}
     ]
   end
 end

@@ -20,17 +20,28 @@ defmodule ChromeRemoteInterface do
       for command <- @domain["commands"] do
         name = command["name"]
         description = command["description"]
-        params = List.wrap(command["parameters"])
-        arity = Enum.count(params)
-        args = Enum.map(params, &(Macro.var(:"#{&1["name"]}", __MODULE__)))
 
         @doc description
-        if arity > 0 do
-          def unquote(:"#{name}")(unquote_splicing(args)), do: "test"
-        else
-          def unquote(:"#{name}")(), do: "test"
+        def unquote(:"#{name}")(server, args \\ %{}) do
+          server |> ChromeRemoteInterface.WebsocketSession.execute_command(
+             unquote("#{domain["domain"]}.#{name}"),
+             args
+           )
         end
       end
     end
   end)
+
+  def new_session(host, port) do
+    server = %ChromeRemoteInterface.Server{
+      host: host,
+      port: port
+    }
+
+    {:ok, pages} = ChromeRemoteInterface.HTTP.list(server)
+    page = List.first(pages)
+    url = page["webSocketDebuggerUrl"]
+
+    ChromeRemoteInterface.WebsocketSession.start_link(url, %{id: 1})
+  end
 end

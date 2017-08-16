@@ -1,6 +1,6 @@
 # ChromeRemoteInterface
 
-**TODO: Add description**
+Elixir Client to the Chrome Debugging Protocol
 
 ## Installation
 
@@ -18,4 +18,3 @@ end
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/chrome_remote_interface](https://hexdocs.pm/chrome_remote_interface).
-
