@@ -52,16 +52,14 @@ defmodule ChromeRemoteInterface.PageSession do
     error = json["error"]
     id = json["id"]
 
-    if error do
-      Logger.error(error["message"])
-    else
-      Enum.find(state.callbacks, fn({ref_id, _from}) ->
-        ref_id == id
-      end)
-      |> case do
-        {_ref_id, from} -> GenServer.reply(from, json)
-        _ -> :ok
-      end
+    Enum.find(state.callbacks, fn({ref_id, _from}) ->
+      ref_id == id
+    end)
+    |> case do
+      {_ref_id, from} ->
+        status = if error, do: :error, else: :ok
+        GenServer.reply(from, {status, json})
+      _ -> :ok
     end
 
     {:noreply, state}
