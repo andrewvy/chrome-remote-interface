@@ -1,7 +1,7 @@
-# ChromeRemoteInterface
+# Chrome Remote Interface
 
 This library provides an Elixir Client to the [Chrome Debugging Protocol](https://chromedevtools.github.io/devtools-protocol/) with
-a small layer of abstraction for Session/Page management.
+a small layer of abstraction for Session and Page Pooling management.
 
 ## Usage
 
@@ -13,9 +13,17 @@ chrome --headless --disable-gpu --remote-debugging-port=9222
 
 > Basic API
 
-```
+```elixir
 # ChromeRemoteInterface works off by creating a Session to the remote debugging port.
+# By default, connects to 'localhost:9222
 iex(1)> {:ok, server} = ChromeRemoteInterface.Session.start_link()
+{:ok, #PID<0.369.0>}
+
+# Other configuration options..
+iex(1)> {:ok, server} = ChromeRemoteInterface.Session.start_link([
+                          host: "localhost",
+                          port: 9223
+                        ])
 {:ok, #PID<0.369.0>}
 
 # From that Session, we can checkout a Page.
@@ -36,17 +44,12 @@ iex(4)> ChromeRemoteInterface.RPC.Page.printToPDF(page_pid, %{})
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `chrome_remote_interface` to your list of dependencies in `mix.exs`:
+Add `:chrome_remote_interface` to your `mix.exs` file!
 
 ```elixir
 def deps do
   [
-    {:chrome_remote_interface, "~> 0.1.0"}
+    {:chrome_remote_interface, "~> 0.0.1"}
   ]
 end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/chrome_remote_interface](https://hexdocs.pm/chrome_remote_interface).
