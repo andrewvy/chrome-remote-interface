@@ -22,8 +22,8 @@ defmodule ChromeRemoteInterface do
         description = command["description"]
 
         @doc description
-        def unquote(:"#{name}")(server, args \\ %{}) do
-          server |> ChromeRemoteInterface.WebsocketSession.execute_command(
+        def unquote(:"#{name}")(page_pid, args \\ %{}) do
+          page_pid |> ChromeRemoteInterface.PageSession.execute_command(
              unquote("#{domain["domain"]}.#{name}"),
              args
            )
@@ -32,16 +32,38 @@ defmodule ChromeRemoteInterface do
     end
   end)
 
-  def new_session(host, port) do
-    server = %ChromeRemoteInterface.Server{
-      host: host,
-      port: port
-    }
+  def list(server) do
+    server
+    |> ChromeRemoteInterface.HTTP.build_request("/json/list")
+    |> ChromeRemoteInterface.HTTP.execute_request()
+    |> ChromeRemoteInterface.HTTP.handle_request()
+  end
 
-    {:ok, pages} = ChromeRemoteInterface.HTTP.list(server)
-    page = List.first(pages)
-    url = page["webSocketDebuggerUrl"]
+  def new(server) do
+    server
+    |> ChromeRemoteInterface.HTTP.build_request("/json/new")
+    |> ChromeRemoteInterface.HTTP.execute_request()
+    |> ChromeRemoteInterface.HTTP.handle_request()
+  end
 
-    ChromeRemoteInterface.WebsocketSession.start_link(url, %{id: 1})
+  def activate(server, id) do
+    server
+    |> ChromeRemoteInterface.HTTP.build_request("/json/activate/#{id}")
+    |> ChromeRemoteInterface.HTTP.execute_request()
+    |> ChromeRemoteInterface.HTTP.handle_request()
+  end
+
+  def close(server, id) do
+    server
+    |> ChromeRemoteInterface.HTTP.build_request("/json/close/#{id}")
+    |> ChromeRemoteInterface.HTTP.execute_request()
+    |> ChromeRemoteInterface.HTTP.handle_request()
+  end
+
+  def version(server) do
+    server
+    |> ChromeRemoteInterface.HTTP.build_request("/json/version")
+    |> ChromeRemoteInterface.HTTP.execute_request()
+    |> ChromeRemoteInterface.HTTP.handle_request()
   end
 end
