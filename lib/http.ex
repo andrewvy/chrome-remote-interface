@@ -1,19 +1,38 @@
 defmodule ChromeRemoteInterface.HTTP do
-  def http_url(server, path) do
+  @moduledoc """
+  This module handles communicating with the DevTools HTTP JSON API.
+  """
+
+  @type success_http_response :: {:ok, Map.t}
+  @type error_http_response :: {:error, any()}
+
+  @spec call(ChromeRemoteInterface.Server.t, String.t) :: success_http_response | error_http_response
+  def call(server, path) do
+    server
+    |> build_request(path)
+    |> execute_request()
+    |> handle_request()
+  end
+
+  # ---
+  # Private
+  # ---
+
+  defp http_url(server, path) do
     "http://#{server.host}:#{server.port}#{path}"
   end
 
-  def build_request(server, path) do
+  defp build_request(server, path) do
     HTTPipe.Conn.new()
     |> HTTPipe.Conn.put_req_url(http_url(server, path))
     |> HTTPipe.Conn.put_req_method(:get)
   end
 
-  def execute_request(conn) do
+  defp execute_request(conn) do
     HTTPipe.Conn.execute(conn)
   end
 
-  def handle_request({:ok, conn}) do
+  defp handle_request({:ok, conn}) do
     with true <- conn.response.status_code >= 200 && conn.response.status_code < 300,
     {:ok, json} <- format_body(conn.response.body) |> Poison.decode() do
       {:ok, json}
@@ -22,13 +41,9 @@ defmodule ChromeRemoteInterface.HTTP do
     end
   end
 
-  def handle_request({:error, _} = error) do
+  defp handle_request({:error, _} = error) do
     error
   end
-
-  # ---
-  # Private
-  # ---
 
   defp format_body(""), do: "{}"
   defp format_body(body), do: body

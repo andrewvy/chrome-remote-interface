@@ -1,7 +1,9 @@
 # Chrome Remote Interface
 
 This library provides an Elixir Client to the [Chrome Debugging Protocol](https://chromedevtools.github.io/devtools-protocol/) with
-a small layer of abstraction for Session and Page Pooling management.
+a small layer of abstraction for handling and subscribing to domain events.
+
+Note: This is a super minimal client wrapper around the Chrome Debugging Protocol.
 
 ## Usage
 
@@ -16,29 +18,30 @@ chrome --headless --disable-gpu --remote-debugging-port=9222
 ```elixir
 # ChromeRemoteInterface works off by creating a Session to the remote debugging port.
 # By default, connects to 'localhost:9222
-iex(1)> {:ok, server} = ChromeRemoteInterface.Session.start_link()
-{:ok, #PID<0.369.0>}
+iex(1)> server = ChromeRemoteInterface.Session.new()
+%ChromeRemoteInterface.Server{host: "localhost", port: 9222}
 
-# Other configuration options..
-iex(1)> {:ok, server} = ChromeRemoteInterface.Session.start_link([
-                          host: "localhost",
-                          port: 9223
-                        ])
-{:ok, #PID<0.369.0>}
+iex(2)> {:ok, pages} = ChromeRemoteInterface.Session.list_page(server)
+{:ok,
+ [%{"description" => "",
+    "devtoolsFrontendUrl" => "/devtools/inspector.html?ws=localhost:9222/devtools/page/d4357ff1-47e8-4e53-8289-fc54089da33e",
+    "id" => "d4357ff1-47e8-4e53-8289-fc54089da33e", "title" => "Google",
+    "type" => "page", "url" => "https://www.google.com/?gws_rd=ssl",
+    "webSocketDebuggerUrl" => "ws://localhost:9222/devtools/page/d4357ff1-47e8-4e53-8289-fc54089da33e"}]}
 
-# From that Session, we can checkout a Page.
-iex(2)> {:ok, page_pid} = ChromeRemoteInterface.Session.checkout_page(server)
-{:ok, #PID<0.372.0>}
+# Now that we have a list of pages, we can connect to any page by using their 'webSocketDebuggerUrl'
+iex(3)> first_page = pages |> List.first()
+iex(4)> {:ok, page_pid} = ChromeRemoteInterface.PageSession.start_link(first_page["webSocketDebuggerUrl"])
 
 # Any methods from https://chromedevtools.github.io/devtools-protocol/1-2/ should be available
 # to execute on that Page.
 
 # 'Page.navigate'
-iex(3)> ChromeRemoteInterface.RPC.Page.navigate(page_pid, %{url: "https://google.com"})
+iex(5)> ChromeRemoteInterface.RPC.Page.navigate(page_pid, %{url: "https://google.com"})
 %{"id" => 1, "result" => %{"frameId" => "95446.1"}}
 
 # 'Page.printToPDF'
-iex(4)> ChromeRemoteInterface.RPC.Page.printToPDF(page_pid, %{})
+iex(6)> ChromeRemoteInterface.RPC.Page.printToPDF(page_pid, %{})
 {:ok, %{"id" => 2, "result" => %{"data" => "JVBERi0xLj..."}}}
 ```
 

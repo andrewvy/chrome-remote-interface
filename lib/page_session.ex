@@ -1,5 +1,12 @@
 defmodule ChromeRemoteInterface.PageSession do
-  require Logger
+  @moduledoc """
+  This module is responsible for all things connected to a Page.
+
+  - Spawning a process that manages the websocket connection
+  - Handling request/response for RPC calls by maintaining unique message IDs
+  - Forwarding Domain events to subscribers.
+  """
+
   use GenServer
 
   defstruct [
@@ -9,10 +16,16 @@ defmodule ChromeRemoteInterface.PageSession do
     ref_id: 1
   ]
 
+  @doc """
+  Connect to a Page's 'webSocketDebuggerUrl'.
+  """
   def start_link(url) do
     GenServer.start_link(__MODULE__, url)
   end
 
+  @doc """
+  Executes a raw JSON RPC command through Websockets.
+  """
   def execute_command(pid, method, params) do
     GenServer.call(pid, {:execute_command, method, params})
   end
