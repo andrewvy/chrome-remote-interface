@@ -85,4 +85,9 @@ defmodule ChromeRemoteInterface.PageSession do
 
     {:noreply, state}
   end
+
+  def terminate(_reason, state) do
+    Process.exit(state.socket, :kill)
+    :stop
+  end
 end
