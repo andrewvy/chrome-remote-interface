@@ -25,6 +25,13 @@ defmodule ChromeRemoteInterface.PageSession do
   end
 
   @doc """
+  Stop the websocket connection to the page.
+  """
+  def stop(page_pid) do
+    GenServer.stop(page_pid)
+  end
+
+  @doc """
   Executes a raw JSON RPC command through Websockets.
   """
   def execute_command(pid, method, params) do
