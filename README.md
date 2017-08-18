@@ -31,7 +31,7 @@ iex(2)> {:ok, pages} = ChromeRemoteInterface.Session.list_page(server)
 
 # Now that we have a list of pages, we can connect to any page by using their 'webSocketDebuggerUrl'
 iex(3)> first_page = pages |> List.first()
-iex(4)> {:ok, page_pid} = ChromeRemoteInterface.PageSession.start_link(first_page["webSocketDebuggerUrl"])
+iex(4)> {:ok, page_pid} = ChromeRemoteInterface.PageSession.start_link(first_page)
 
 # Any methods from https://chromedevtools.github.io/devtools-protocol/1-2/ should be available
 # to execute on that Page.

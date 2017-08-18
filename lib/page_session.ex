@@ -19,6 +19,7 @@ defmodule ChromeRemoteInterface.PageSession do
   @doc """
   Connect to a Page's 'webSocketDebuggerUrl'.
   """
+  def start_link(%{"webSocketDebuggerUrl" => url}), do: start_link(url)
   def start_link(url) do
     GenServer.start_link(__MODULE__, url)
   end
