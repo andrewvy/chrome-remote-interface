@@ -26,8 +26,7 @@ defmodule ChromeRemoteInterface.Mixfile do
   defp deps do
     [
       {:poison, "~> 3.1"},
-      {:httpipe_adapters_hackney, "~> 0.9"},
-      {:httpipe, "~> 0.9"},
+      {:hackney, "~> 1.8 or ~> 1.7 or ~> 1.6"},
       {:websockex, "~> 0.4.0"},
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]

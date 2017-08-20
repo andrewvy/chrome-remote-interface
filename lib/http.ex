@@ -9,9 +9,8 @@ defmodule ChromeRemoteInterface.HTTP do
   @spec call(ChromeRemoteInterface.Server.t, String.t) :: success_http_response | error_http_response
   def call(server, path) do
     server
-    |> build_request(path)
-    |> execute_request()
-    |> handle_request()
+    |> execute_request(path)
+    |> handle_response()
   end
 
   # ---
@@ -22,27 +21,26 @@ defmodule ChromeRemoteInterface.HTTP do
     "http://#{server.host}:#{server.port}#{path}"
   end
 
-  defp build_request(server, path) do
-    HTTPipe.Conn.new()
-    |> HTTPipe.Conn.put_req_url(http_url(server, path))
-    |> HTTPipe.Conn.put_req_method(:get)
+  defp execute_request(server, path) do
+    :hackney.request(:get, http_url(server, path), [], <<>>, [])
   end
 
-  defp execute_request(conn) do
-    HTTPipe.Conn.execute(conn)
-  end
-
-  defp handle_request({:ok, conn}) do
-    with true <- conn.response.status_code >= 200 && conn.response.status_code < 300,
-    {:ok, json} <- format_body(conn.response.body) |> Poison.decode() do
-      {:ok, json}
+  defp handle_response({:ok, status_code, _response_headers, client_ref}) do
+    with true <- status_code >= 200 && status_code < 300,
+      {:ok, body} <- :hackney.body(client_ref),
+      {:ok, json} <- format_body(body) |> Poison.decode() do
+        {:ok, json}
     else
       error -> error
     end
   end
 
-  defp handle_request({:error, _} = error) do
-    error
+  defp handle_response({:error, {:closed, _}}) do
+    {:error, :unexpected_close}
+  end
+
+  defp handle_response({:error, reason}) do
+    {:error, reason}
   end
 
   defp format_body(""), do: "{}"
