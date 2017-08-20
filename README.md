@@ -1,5 +1,7 @@
 # Chrome Remote Interface
 
+[![CircleCI](https://img.shields.io/circleci/project/github/andrewvy/chrome-remote-interface.svg)](https://circleci.com/gh/andrewvy/chrome-remote-interface)
+
 This library provides an Elixir Client to the [Chrome Debugging Protocol](https://chromedevtools.github.io/devtools-protocol/) with
 a small layer of abstraction for handling and subscribing to domain events.
 
