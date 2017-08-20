@@ -3,69 +3,61 @@ defmodule ChromeRemoteInterface.PageSessionTest do
 
   alias ChromeRemoteInterface.PageSession
 
-  test "Notifies subscribers of events" do
-    state = %PageSession{}
+  describe "Event subscriptions" do
+    test "Notifies subscribers of events" do
+      state = %PageSession{}
+      state = subscribe_to_test_event(state)
+      fire_test_event(state)
 
-    {:reply, :ok, state} = PageSession.handle_call(
-     {:subscribe, "TestEvent", self()},
-     self(),
-     state
-    )
+      assert_receive {:chrome_remote_interface, "TestEvent", _}
+    end
 
-    json = Poison.encode!(%{
-      method: "TestEvent"
-    })
+    test "Can unsubscribe from events" do
+      state = %PageSession{}
+      state = subscribe_to_test_event(state)
 
-    PageSession.handle_info({:message, json}, state)
+      {:reply, :ok, state} = PageSession.handle_call(
+       {:unsubscribe, "TestEvent", self()},
+       self(),
+       state
+      )
 
-    assert_receive {:chrome_remote_interface, "TestEvent", _}
+      fire_test_event(state)
+
+      refute_receive {:chrome_remote_interface, "TestEvent", _}
+    end
+
+    test "Can unsubscribe from all events" do
+      state = %PageSession{}
+      state = subscribe_to_test_event(state)
+
+      {:reply, :ok, state} = PageSession.handle_call(
+       {:unsubscribe_all, self()},
+       self(),
+       state
+      )
+
+      fire_test_event(state)
+
+      refute_receive {:chrome_remote_interface, "TestEvent", _}
+    end
   end
 
-  test "Can unsubscribe from events" do
-    state = %PageSession{}
-
+  def subscribe_to_test_event(state) do
     {:reply, :ok, state} = PageSession.handle_call(
      {:subscribe, "TestEvent", self()},
      self(),
      state
     )
 
-    json = Poison.encode!(%{
-      method: "TestEvent"
-    })
-
-    {:reply, :ok, state} = PageSession.handle_call(
-     {:unsubscribe, "TestEvent", self()},
-     self(),
-     state
-   )
-
-    PageSession.handle_info({:message, json}, state)
-
-    refute_receive {:chrome_remote_interface, "TestEvent", _}
+    state
   end
 
-  test "Can unsubscribe from all events" do
-    state = %PageSession{}
-
-    {:reply, :ok, state} = PageSession.handle_call(
-     {:subscribe, "TestEvent", self()},
-     self(),
-     state
-    )
-
+  def fire_test_event(state) do
     json = Poison.encode!(%{
       method: "TestEvent"
     })
 
-    {:reply, :ok, state} = PageSession.handle_call(
-     {:unsubscribe_all, self()},
-     self(),
-     state
-   )
-
     PageSession.handle_info({:message, json}, state)
-
-    refute_receive {:chrome_remote_interface, "TestEvent", _}
   end
 end
