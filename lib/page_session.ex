@@ -64,6 +64,21 @@ defmodule ChromeRemoteInterface.PageSession do
   end
 
   @doc """
+  Unsubscribes from an event.
+  """
+  @spec unsubscribe(pid(), String.t, pid()) :: any()
+  def unsubscribe(pid, event, subscriber_pid \\ self()) do
+    GenServer.call(pid, {:unsubscribe, event, subscriber_pid})
+  end
+
+  @doc """
+  Unscribes to all events.
+  """
+  def unsubscribe_all(pid, subscriber_pid \\ self()) do
+    GenServer.call(pid, {:unsubscribe_all, subscriber_pid})
+  end
+
+  @doc """
   Executes a raw JSON RPC command through Websockets.
   """
   def execute_command(pid, method, params) do
@@ -112,6 +127,33 @@ defmodule ChromeRemoteInterface.PageSession do
       |> Map.update(event, [subscriber_pid], fn(subscriber_pids) ->
         [subscriber_pid | subscriber_pids]
       end)
+
+    new_state = %{state | event_subscribers: new_event_subscribers}
+
+    {:reply, :ok, new_state}
+  end
+
+  def handle_call({:unsubscribe, event, subscriber_pid}, _from, state) do
+    new_event_subscribers =
+      state
+      |> Map.get(:event_subscribers, %{})
+      |> Map.update(event, [], fn(subscriber_pids) ->
+        List.delete(subscriber_pids, subscriber_pid)
+      end)
+
+    new_state = %{state | event_subscribers: new_event_subscribers}
+
+    {:reply, :ok, new_state}
+  end
+
+  def handle_call({:unsubscribe_all, subscriber_pid}, _from, state) do
+    new_event_subscribers =
+      state
+      |> Map.get(:event_subscribers, %{})
+      |> Enum.map(fn({key, subscriber_pids}) ->
+        {key, List.delete(subscriber_pids, subscriber_pid)}
+      end)
+      |> Enum.into(%{})
 
     new_state = %{state | event_subscribers: new_event_subscribers}
 
