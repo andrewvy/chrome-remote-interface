@@ -183,16 +183,19 @@ defmodule ChromeRemoteInterface.PageSession do
     method = json["method"]
 
     # Message is an RPC response
-    if id do
-      send_rpc_response(state.callbacks, id, json)
-    end
+    callbacks =
+      if id do
+        send_rpc_response(state.callbacks, id, json)
+      else
+        state.callbacks
+      end
 
     # Message is an Domain event
     if method do
       send_event(state.event_subscribers, method, json)
     end
 
-    {:noreply, state}
+    {:noreply, %{state | callbacks: callbacks}}
   end
 
   defp send_rpc_request(state, method, params) do
@@ -213,6 +216,11 @@ defmodule ChromeRemoteInterface.PageSession do
     end)
   end
 
+  defp remove_callback(callbacks, from) do
+    callbacks
+    |> Enum.reject(&(&1 == from))
+  end
+
   defp increment_ref_id(state) do
     state
     |> Map.update(:ref_id, 1, &(&1 + 1))
@@ -225,13 +233,16 @@ defmodule ChromeRemoteInterface.PageSession do
       ref_id == id
     end)
     |> case do
-      {_ref_id, {:cast, method, from}} ->
+      {_ref_id, {:cast, method, from}} = callback ->
         event = {:chrome_remote_interface, method, json}
         send(from, event)
-      {_ref_id, {:call, from}} ->
+        remove_callback(callbacks, callback)
+      {_ref_id, {:call, from}} = callback ->
         status = if error, do: :error, else: :ok
         GenServer.reply(from, {status, json})
-      _ -> :ok
+        remove_callback(callbacks, callback)
+      _ ->
+        callbacks
     end
   end
 
