@@ -7,6 +7,18 @@ a small layer of abstraction for handling and subscribing to domain events.
 
 Note: This is a super minimal client wrapper around the Chrome Debugging Protocol.
 
+## Installation
+
+Add `:chrome_remote_interface` to your `mix.exs` file!
+
+```elixir
+def deps do
+  [
+    {:chrome_remote_interface, "~> 0.0.4"}
+  ]
+end
+```
+
 ## Usage
 
 > Note: In these examples, it assumes you're already running chrome headless with remote debugging enabled.
@@ -45,16 +57,4 @@ iex(5)> ChromeRemoteInterface.RPC.Page.navigate(page_pid, %{url: "https://google
 # 'Page.printToPDF'
 iex(6)> ChromeRemoteInterface.RPC.Page.printToPDF(page_pid, %{})
 {:ok, %{"id" => 2, "result" => %{"data" => "JVBERi0xLj..."}}}
-```
-
-## Installation
-
-Add `:chrome_remote_interface` to your `mix.exs` file!
-
-```elixir
-def deps do
-  [
-    {:chrome_remote_interface, "~> 0.0.3"}
-  ]
-end
 ```
