@@ -72,10 +72,28 @@ defmodule ChromeRemoteInterface.PageSession do
   end
 
   @doc """
-  Unscribes to all events.
+  Unsubcribes to all events.
   """
   def unsubscribe_all(pid, subscriber_pid \\ self()) do
     GenServer.call(pid, {:unsubscribe_all, subscriber_pid})
+  end
+
+  @doc """
+  Executes an RPC command with the given options.
+
+  Options:
+  `:async` -
+    If a boolean, sends the response as a message to the current process.
+    Else, if provided with a PID, it will send the response to that process instead.
+  """
+  def execute_command(pid, method, params, opts) do
+    async = Keyword.get(opts, :async, false)
+
+    case async do
+      false -> call(pid, method, params)
+      true -> cast(pid, method, params, self())
+      from when is_pid(from) -> cast(pid, method, params, from)
+    end
   end
 
   @doc """

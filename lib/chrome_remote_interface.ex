@@ -35,29 +35,25 @@ defmodule ChromeRemoteInterface do
         #{arg_doc}
         """
         def unquote(:"#{name}")(page_pid) do
-          page_pid |> PageSession.call(
+          page_pid |> PageSession.execute_command(
             unquote("#{domain["domain"]}.#{name}"),
-            %{}
+            %{},
+            []
           )
         end
         def unquote(:"#{name}")(page_pid, parameters) do
-          page_pid |> PageSession.call(
+          page_pid |> PageSession.execute_command(
             unquote("#{domain["domain"]}.#{name}"),
-            parameters
+            parameters,
+            []
           )
         end
         def unquote(:"#{name}")(page_pid, parameters, opts) when is_list(opts) do
-          if opts[:async] do
-            page_pid |> PageSession.cast(
-              unquote("#{domain["domain"]}.#{name}"),
-              parameters
-            )
-          else
-            page_pid |> PageSession.call(
-              unquote("#{domain["domain"]}.#{name}"),
-              parameters
-            )
-          end
+          page_pid |> PageSession.execute_command(
+            unquote("#{domain["domain"]}.#{name}"),
+            parameters,
+            opts
+          )
         end
       end
     end
