@@ -81,8 +81,16 @@ defmodule ChromeRemoteInterface.PageSession do
   @doc """
   Executes a raw JSON RPC command through Websockets.
   """
-  def execute_command(pid, method, params) do
-    GenServer.call(pid, {:execute_command, method, params})
+  def call(pid, method, params) do
+    GenServer.call(pid, {:call_command, method, params})
+  end
+
+  @doc """
+  Executes a raw JSON RPC command through Websockets, but sends the
+  response as a message to the requesting process.
+  """
+  def cast(pid, method, params, from \\ self()) do
+    GenServer.cast(pid, {:cast_command, method, params, from})
   end
 
   # ---
@@ -99,22 +107,24 @@ defmodule ChromeRemoteInterface.PageSession do
     {:ok, state}
   end
 
-  def handle_call({:execute_command, method, params}, from, state) do
-    message = %{
-      "id" => state.ref_id,
-      "method" => method,
-      "params" => params
-    }
-
-    json = Poison.encode!(message)
-    WebSockex.send_frame(state.socket, {:text, json})
+  def handle_cast({:cast_command, method, params, from}, state) do
+    send_rpc_request(state, method, params)
 
     new_state =
       state
-      |> Map.update(:callbacks, [{state.ref_id, from}], fn(callbacks) ->
-        [{state.ref_id, from} | callbacks]
-      end)
-      |> Map.update(:ref_id, 1, &(&1 + 1))
+      |> add_callback({:cast, method, from})
+      |> increment_ref_id()
+
+    {:noreply, new_state}
+  end
+
+  def handle_call({:call_command, method, params}, from, state) do
+    send_rpc_request(state, method, params)
+
+    new_state =
+      state
+      |> add_callback({:call, from})
+      |> increment_ref_id()
 
     {:noreply, new_state}
   end
@@ -185,6 +195,29 @@ defmodule ChromeRemoteInterface.PageSession do
     {:noreply, state}
   end
 
+  defp send_rpc_request(state, method, params) do
+    message = %{
+      "id" => state.ref_id,
+      "method" => method,
+      "params" => params
+    }
+
+    json = Poison.encode!(message)
+    WebSockex.send_frame(state.socket, {:text, json})
+  end
+
+  defp add_callback(state, from) do
+    state
+    |> Map.update(:callbacks, [{state.ref_id, from}], fn(callbacks) ->
+      [{state.ref_id, from} | callbacks]
+    end)
+  end
+
+  defp increment_ref_id(state) do
+    state
+    |> Map.update(:ref_id, 1, &(&1 + 1))
+  end
+
   defp send_rpc_response(callbacks, id, json) do
     error = json["error"]
 
@@ -192,7 +225,10 @@ defmodule ChromeRemoteInterface.PageSession do
       ref_id == id
     end)
     |> case do
-      {_ref_id, from} ->
+      {_ref_id, {:cast, method, from}} ->
+        event = {:chrome_remote_interface, method, json}
+        send(from, event)
+      {_ref_id, {:call, from}} ->
         status = if error, do: :error, else: :ok
         GenServer.reply(from, {status, json})
       _ -> :ok
