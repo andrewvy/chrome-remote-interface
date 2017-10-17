@@ -126,7 +126,7 @@ defmodule ChromeRemoteInterface.PageSession do
   end
 
   def handle_cast({:cast_command, method, params, from}, state) do
-    send_rpc_request(state, method, params)
+    send(self(), {:send_rpc_request, state.ref_id, state.socket, method, params})
 
     new_state =
       state
@@ -137,7 +137,7 @@ defmodule ChromeRemoteInterface.PageSession do
   end
 
   def handle_call({:call_command, method, params}, from, state) do
-    send_rpc_request(state, method, params)
+    send(self(), {:send_rpc_request, state.ref_id, state.socket, method, params})
 
     new_state =
       state
@@ -216,15 +216,16 @@ defmodule ChromeRemoteInterface.PageSession do
     {:noreply, %{state | callbacks: callbacks}}
   end
 
-  defp send_rpc_request(state, method, params) do
+  def handle_info({:send_rpc_request, ref_id, socket, method, params}, state) do
     message = %{
-      "id" => state.ref_id,
+      "id" => ref_id,
       "method" => method,
       "params" => params
     }
 
     json = Poison.encode!(message)
-    WebSockex.send_frame(state.socket, {:text, json})
+    WebSockex.send_frame(socket, {:text, json})
+    {:noreply, state}
   end
 
   defp add_callback(state, from) do
