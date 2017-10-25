@@ -28,7 +28,8 @@ defmodule ChromeRemoteInterface.HTTP do
   defp handle_response({:ok, status_code, _response_headers, client_ref}) do
     with true <- status_code >= 200 && status_code < 300,
       {:ok, body} <- :hackney.body(client_ref),
-      {:ok, json} <- format_body(body) |> Poison.decode() do
+      {:ok, formatted_body} <- format_body(body),
+      {:ok, json} <- decode(formatted_body) do
         {:ok, json}
     else
       error -> error
@@ -43,6 +44,13 @@ defmodule ChromeRemoteInterface.HTTP do
     {:error, reason}
   end
 
-  defp format_body(""), do: "{}"
-  defp format_body(body), do: body
+  defp format_body(""), do: format_body("{}")
+  defp format_body(body), do: {:ok, body}
+
+  defp decode(body) do
+    case Poison.decode(body) do
+      {:ok, json} -> {:ok, json}
+      {:error, _reason} -> {:ok, body}
+    end
+  end
 end
