@@ -22,7 +22,7 @@ defmodule ChromeRemoteInterface.HTTP do
   end
 
   defp execute_request(server, path) do
-    :hackney.request(:get, http_url(server, path), [], <<>>, [])
+    :hackney.request(:get, http_url(server, path), [], <<>>, [path_encode_fun: &(&1)])
   end
 
   defp handle_response({:ok, status_code, _response_headers, client_ref}) do
