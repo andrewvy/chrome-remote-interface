@@ -14,7 +14,7 @@ Add `:chrome_remote_interface` to your `mix.exs` file!
 ```elixir
 def deps do
   [
-    {:chrome_remote_interface, "~> 0.0.4"}
+    {:chrome_remote_interface, "~> 0.0.5"}
   ]
 end
 ```
