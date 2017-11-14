@@ -4,7 +4,7 @@ defmodule ChromeRemoteInterface.Mixfile do
   def project do
     [
       app: :chrome_remote_interface,
-      version: "0.0.6",
+      version: "0.1.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
       deps: deps(),
