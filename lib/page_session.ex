@@ -85,12 +85,16 @@ defmodule ChromeRemoteInterface.PageSession do
   `:async` -
     If a boolean, sends the response as a message to the current process.
     Else, if provided with a PID, it will send the response to that process instead.
+
+  `:timeout` -
+    This sets the timeout for the blocking call, defaults to 5 seconds.
   """
   def execute_command(pid, method, params, opts) do
     async = Keyword.get(opts, :async, false)
+    timeout = Keyword.get(opts, :timeout, 5_000)
 
     case async do
-      false -> call(pid, method, params)
+      false -> call(pid, method, params, timeout)
       true -> cast(pid, method, params, self())
       from when is_pid(from) -> cast(pid, method, params, from)
     end
@@ -99,8 +103,8 @@ defmodule ChromeRemoteInterface.PageSession do
   @doc """
   Executes a raw JSON RPC command through Websockets.
   """
-  def call(pid, method, params) do
-    GenServer.call(pid, {:call_command, method, params})
+  def call(pid, method, params, timeout) do
+    GenServer.call(pid, {:call_command, method, params}, timeout)
   end
 
   @doc """
