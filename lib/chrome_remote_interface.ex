@@ -5,9 +5,28 @@ defmodule ChromeRemoteInterface do
 
   alias ChromeRemoteInterface.PageSession
 
+  @protocol_env_key "CRI_PROTOCOL_VERSION"
+  @protocol_versions ["1-2", "1-3", "tot"]
+  @protocol_version (
+    if (vsn = System.get_env(@protocol_env_key)) in @protocol_versions do
+      vsn
+    else
+      "1-3"
+    end
+  )
+  IO.puts("Compiling ChromeRemoteInterface with Chrome DevTools Protocol version: '#{@protocol_version}'")
+
+  @doc """
+  Gets the current version of the Chrome Debugger Protocol
+  """
+  def protocol_version() do
+    @protocol_version
+  end
+
   protocol =
-    File.read!("priv/protocol.json")
+    File.read!("priv/#{@protocol_version}/protocol.json")
     |> Poison.decode!()
+
 
   # Generate ChromeRemoteInterface.RPC Modules
 
@@ -58,10 +77,4 @@ defmodule ChromeRemoteInterface do
       end
     end
   end)
-
-  @protocol_version "#{protocol["version"]["major"]}.#{protocol["version"]["minor"]}"
-  @doc """
-  Gets the current version of the Chrome Debugger Protocol
-  """
-  def protocol_version(), do: @protocol_version
 end
