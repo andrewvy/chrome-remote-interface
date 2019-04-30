@@ -8,8 +8,6 @@ defmodule ChromeRemoteInterface.Session do
     Server
   }
 
-  use GenServer
-
   @default_opts [
     host: "localhost",
     port: 9222
