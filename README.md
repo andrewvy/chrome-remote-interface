@@ -19,6 +19,25 @@ def deps do
 end
 ```
 
+### Chrome DevTools Protocol Selection
+
+Chrome Remote Interface generated its API at compile time from the protocol
+definition released by the Chrome DevTools Team.
+For more info see: [https://chromedevtools.github.io/devtools-protocol/](https://chromedevtools.github.io/devtools-protocol/)
+
+This can be overridden by setting `CRI_PROTOCOL_VERSION` environment variable
+to:
+* 1-2
+* 1-3 * default
+* tot
+
+Example:
+```
+CRI_PROTOCOL_VERSION=1-2 mix compile
+CRI_PROTOCOL_VERSION=1-3 mix compile
+CRI_PROTOCOL_VERSION=tot mix compile
+```
+
 ## Usage
 
 > Note: In these examples, it assumes you're already running chrome headless with remote debugging enabled.
