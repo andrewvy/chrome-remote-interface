@@ -54,7 +54,7 @@ chrome --headless --disable-gpu --remote-debugging-port=9222
 iex(1)> server = ChromeRemoteInterface.Session.new()
 %ChromeRemoteInterface.Server{host: "localhost", port: 9222}
 
-iex(2)> {:ok, pages} = ChromeRemoteInterface.Session.list_page(server)
+iex(2)> {:ok, pages} = ChromeRemoteInterface.Session.list_pages(server)
 {:ok,
  [%{"description" => "",
     "devtoolsFrontendUrl" => "/devtools/inspector.html?ws=localhost:9222/devtools/page/d4357ff1-47e8-4e53-8289-fc54089da33e",
