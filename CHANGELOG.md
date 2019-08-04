@@ -3,6 +3,7 @@
 ### Enhancements
 
   * [Dependencies] Switch from `Poison` -> `Jason`.
+  * [Internal] Adds a `mix fetch_cdp_protocol` which updates all protocol files.
 
 ### Bug Fixes
 
