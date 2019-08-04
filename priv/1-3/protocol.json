@@ -2604,6 +2604,12 @@
               "type": "boolean"
             },
             {
+              "name": "fromPrefetchCache",
+              "description": "Specifies that the request was served from the prefetch cache.",
+              "optional": true,
+              "type": "boolean"
+            },
+            {
               "name": "encodedDataLength",
               "description": "Total number of bytes received for this request so far.",
               "type": "number"
@@ -3588,6 +3594,7 @@
       "dependencies": [
         "Debugger",
         "DOM",
+        "IO",
         "Network",
         "Runtime"
       ],
@@ -3626,7 +3633,14 @@
             },
             {
               "name": "url",
-              "description": "Frame document's URL.",
+              "description": "Frame document's URL without fragment.",
+              "type": "string"
+            },
+            {
+              "name": "urlFragment",
+              "description": "Frame document's URL fragment including the '#'.",
+              "experimental": true,
+              "optional": true,
               "type": "string"
             },
             {
@@ -3641,7 +3655,7 @@
             },
             {
               "name": "unreachableUrl",
-              "description": "If the frame failed to load, this contains the URL that could not be loaded.",
+              "description": "If the frame failed to load, this contains the URL that could not be loaded. Note that unlike url above, this URL may contain a fragment.",
               "experimental": true,
               "optional": true,
               "type": "string"
@@ -4228,13 +4242,31 @@
               "description": "Whether or not to prefer page size as defined by css. Defaults to false,\nin which case the content will be scaled to fit the paper size.",
               "optional": true,
               "type": "boolean"
+            },
+            {
+              "name": "transferMode",
+              "description": "return as stream",
+              "experimental": true,
+              "optional": true,
+              "type": "string",
+              "enum": [
+                "ReturnAsBase64",
+                "ReturnAsStream"
+              ]
             }
           ],
           "returns": [
             {
               "name": "data",
-              "description": "Base64-encoded pdf data.",
+              "description": "Base64-encoded pdf data. Empty if |returnAsStream| is specified.",
               "type": "string"
+            },
+            {
+              "name": "stream",
+              "description": "A handle of the stream that holds resulting PDF data.",
+              "experimental": true,
+              "optional": true,
+              "$ref": "IO.StreamHandle"
             }
           ]
         },
@@ -4294,6 +4326,20 @@
             {
               "name": "timestamp",
               "$ref": "Network.MonotonicTime"
+            }
+          ]
+        },
+        {
+          "name": "fileChooserOpened",
+          "description": "Emitted only when `page.interceptFileChooser` is enabled.",
+          "parameters": [
+            {
+              "name": "mode",
+              "type": "string",
+              "enum": [
+                "selectSingle",
+                "selectMultiple"
+              ]
             }
           ]
         },
@@ -4641,6 +4687,7 @@
             {
               "name": "schemeIsCryptographic",
               "description": "True if the page was loaded over cryptographic transport such as HTTPS.",
+              "deprecated": true,
               "type": "boolean"
             },
             {
@@ -4802,6 +4849,18 @@
               "name": "enableBeginFrameControl",
               "description": "Whether BeginFrames for this target will be controlled via DevTools (headless chrome only,\nnot supported on MacOS yet, false by default).",
               "experimental": true,
+              "optional": true,
+              "type": "boolean"
+            },
+            {
+              "name": "newWindow",
+              "description": "Whether to create a new Window or Tab (chrome-only, false by default).",
+              "optional": true,
+              "type": "boolean"
+            },
+            {
+              "name": "background",
+              "description": "Whether to create the target in background or foreground (chrome-only,\nfalse by default).",
               "optional": true,
               "type": "boolean"
             }
@@ -5445,6 +5504,28 @@
           ]
         },
         {
+          "name": "setInstrumentationBreakpoint",
+          "description": "Sets instrumentation breakpoint.",
+          "parameters": [
+            {
+              "name": "instrumentation",
+              "description": "Instrumentation name.",
+              "type": "string",
+              "enum": [
+                "beforeScriptExecution",
+                "beforeScriptWithSourceMapExecution"
+              ]
+            }
+          ],
+          "returns": [
+            {
+              "name": "breakpointId",
+              "description": "Id of the created breakpoint for further reference.",
+              "$ref": "BreakpointId"
+            }
+          ]
+        },
+        {
           "name": "setBreakpointByUrl",
           "description": "Sets JavaScript breakpoint at given location specified either by URL or URL regex. Once this\ncommand is issued, all existing parsed scripts will have breakpoints resolved and returned in\n`locations` property. Further matching script parsing will result in subsequent\n`breakpointResolved` events issued. This logical breakpoint will survive page reloads.",
           "parameters": [
@@ -5678,16 +5759,17 @@
               "description": "Pause reason.",
               "type": "string",
               "enum": [
-                "XHR",
+                "ambiguous",
+                "assert",
+                "debugCommand",
                 "DOM",
                 "EventListener",
                 "exception",
-                "assert",
-                "debugCommand",
-                "promiseRejection",
+                "instrumentation",
                 "OOM",
                 "other",
-                "ambiguous"
+                "promiseRejection",
+                "XHR"
               ]
             },
             {

@@ -4,6 +4,7 @@
 
   * [Dependencies] Switch from `Poison` -> `Jason`.
   * [Internal] Adds a `mix fetch_cdp_protocol` which updates all protocol files.
+  * [Protocol] Update `1-3` and `tot` protocols as of `2019-08-03`
 
 ### Bug Fixes
 

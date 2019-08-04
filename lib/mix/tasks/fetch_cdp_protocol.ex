@@ -17,7 +17,7 @@ defmodule Mix.Tasks.FetchCdpProtocol do
     },
     "1-3" => %{
       url:
-        "https://github.com/ChromeDevTools/debugger-protocol-viewer/blob/master/_data/1-3/protocol.json",
+        "https://raw.githubusercontent.com/ChromeDevTools/debugger-protocol-viewer/master/_data/1-3/protocol.json",
       output: "priv/1-3/protocol.json"
     },
     "tot" => %{
