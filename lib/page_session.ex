@@ -9,13 +9,11 @@ defmodule ChromeRemoteInterface.PageSession do
 
   use GenServer
 
-  defstruct [
-    url: "",
-    socket: nil,
-    callbacks: [],
-    event_subscribers: %{},
-    ref_id: 1
-  ]
+  defstruct url: "",
+            socket: nil,
+            callbacks: [],
+            event_subscribers: %{},
+            ref_id: 1
 
   # ---
   # Public API
@@ -25,6 +23,7 @@ defmodule ChromeRemoteInterface.PageSession do
   Connect to a Page's 'webSocketDebuggerUrl'.
   """
   def start_link(%{"webSocketDebuggerUrl" => url}), do: start_link(url)
+
   def start_link(url) do
     GenServer.start_link(__MODULE__, url)
   end
@@ -58,7 +57,7 @@ defmodule ChromeRemoteInterface.PageSession do
      "params" => %{"timestamp" => 1012329.888558}}}
   ```
   """
-  @spec subscribe(pid(), String.t, pid()) :: any()
+  @spec subscribe(pid(), String.t(), pid()) :: any()
   def subscribe(pid, event, subscriber_pid \\ self()) do
     GenServer.call(pid, {:subscribe, event, subscriber_pid})
   end
@@ -66,7 +65,7 @@ defmodule ChromeRemoteInterface.PageSession do
   @doc """
   Unsubscribes from an event.
   """
-  @spec unsubscribe(pid(), String.t, pid()) :: any()
+  @spec unsubscribe(pid(), String.t(), pid()) :: any()
   def unsubscribe(pid, event, subscriber_pid \\ self()) do
     GenServer.call(pid, {:unsubscribe, event, subscriber_pid})
   end
@@ -121,6 +120,7 @@ defmodule ChromeRemoteInterface.PageSession do
 
   def init(url) do
     {:ok, socket} = ChromeRemoteInterface.Websocket.start_link(url)
+
     state = %__MODULE__{
       url: url,
       socket: socket
@@ -156,7 +156,7 @@ defmodule ChromeRemoteInterface.PageSession do
     new_event_subscribers =
       state
       |> Map.get(:event_subscribers, %{})
-      |> Map.update(event, [subscriber_pid], fn(subscriber_pids) ->
+      |> Map.update(event, [subscriber_pid], fn subscriber_pids ->
         [subscriber_pid | subscriber_pids]
       end)
 
@@ -169,7 +169,7 @@ defmodule ChromeRemoteInterface.PageSession do
     new_event_subscribers =
       state
       |> Map.get(:event_subscribers, %{})
-      |> Map.update(event, [], fn(subscriber_pids) ->
+      |> Map.update(event, [], fn subscriber_pids ->
         List.delete(subscriber_pids, subscriber_pid)
       end)
 
@@ -182,7 +182,7 @@ defmodule ChromeRemoteInterface.PageSession do
     new_event_subscribers =
       state
       |> Map.get(:event_subscribers, %{})
-      |> Enum.map(fn({key, subscriber_pids}) ->
+      |> Enum.map(fn {key, subscriber_pids} ->
         {key, List.delete(subscriber_pids, subscriber_pid)}
       end)
       |> Enum.into(%{})
@@ -200,7 +200,7 @@ defmodule ChromeRemoteInterface.PageSession do
   # If the frame is an event:
   #   - Forward the event to any subscribers.
   def handle_info({:message, frame_data}, state) do
-    json = Poison.decode!(frame_data)
+    json = Jason.decode!(frame_data)
     id = json["id"]
     method = json["method"]
 
@@ -227,14 +227,14 @@ defmodule ChromeRemoteInterface.PageSession do
       "params" => params
     }
 
-    json = Poison.encode!(message)
+    json = Jason.encode!(message)
     WebSockex.send_frame(socket, {:text, json})
     {:noreply, state}
   end
 
   defp add_callback(state, from) do
     state
-    |> Map.update(:callbacks, [{state.ref_id, from}], fn(callbacks) ->
+    |> Map.update(:callbacks, [{state.ref_id, from}], fn callbacks ->
       [{state.ref_id, from} | callbacks]
     end)
   end
@@ -252,7 +252,7 @@ defmodule ChromeRemoteInterface.PageSession do
   defp send_rpc_response(callbacks, id, json) do
     error = json["error"]
 
-    Enum.find(callbacks, fn({ref_id, _from}) ->
+    Enum.find(callbacks, fn {ref_id, _from} ->
       ref_id == id
     end)
     |> case do
@@ -260,10 +260,12 @@ defmodule ChromeRemoteInterface.PageSession do
         event = {:chrome_remote_interface, method, json}
         send(from, event)
         remove_callback(callbacks, callback)
+
       {_ref_id, {:call, from}} = callback ->
         status = if error, do: :error, else: :ok
         GenServer.reply(from, {status, json})
         remove_callback(callbacks, callback)
+
       _ ->
         callbacks
     end
@@ -277,7 +279,7 @@ defmodule ChromeRemoteInterface.PageSession do
       |> Map.get(event_name, [])
 
     pids_subscribed_to_event
-    |> Enum.each(&(send(&1, event)))
+    |> Enum.each(&send(&1, event))
   end
 
   def terminate(_reason, state) do
