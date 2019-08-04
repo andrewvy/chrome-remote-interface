@@ -16,11 +16,12 @@ defmodule ChromeRemoteInterface.PageSessionTest do
       state = %PageSession{}
       state = subscribe_to_test_event(state)
 
-      {:reply, :ok, state} = PageSession.handle_call(
-       {:unsubscribe, "TestEvent", self()},
-       self(),
-       state
-      )
+      {:reply, :ok, state} =
+        PageSession.handle_call(
+          {:unsubscribe, "TestEvent", self()},
+          self(),
+          state
+        )
 
       fire_test_event(state)
 
@@ -31,11 +32,12 @@ defmodule ChromeRemoteInterface.PageSessionTest do
       state = %PageSession{}
       state = subscribe_to_test_event(state)
 
-      {:reply, :ok, state} = PageSession.handle_call(
-       {:unsubscribe_all, self()},
-       self(),
-       state
-      )
+      {:reply, :ok, state} =
+        PageSession.handle_call(
+          {:unsubscribe_all, self()},
+          self(),
+          state
+        )
 
       fire_test_event(state)
 
@@ -49,7 +51,9 @@ defmodule ChromeRemoteInterface.PageSessionTest do
       from = {make_ref(), self()}
 
       state = %PageSession{socket: websocket}
-      {:noreply, state} = PageSession.handle_call({:call_command, "TestCommand", %{}}, from, state)
+
+      {:noreply, state} =
+        PageSession.handle_call({:call_command, "TestCommand", %{}}, from, state)
 
       assert [{_ref, {:call, _from}}] = state.callbacks
     end
@@ -59,11 +63,13 @@ defmodule ChromeRemoteInterface.PageSessionTest do
       from = {self(), make_ref()}
 
       state = %PageSession{socket: websocket}
-      {:noreply, state} = PageSession.handle_call({:call_command, "TestCommand", %{}}, from, state)
+
+      {:noreply, state} =
+        PageSession.handle_call({:call_command, "TestCommand", %{}}, from, state)
 
       assert [{ref, {:call, _from}}] = state.callbacks
 
-      frame = %{"id" => ref, "result" => %{"data" => %{"foo" => "bar"}}} |> Poison.encode!()
+      frame = %{"id" => ref, "result" => %{"data" => %{"foo" => "bar"}}} |> Jason.encode!()
       {:noreply, state} = PageSession.handle_info({:message, frame}, state)
 
       assert [] = state.callbacks
@@ -71,25 +77,27 @@ defmodule ChromeRemoteInterface.PageSessionTest do
   end
 
   def subscribe_to_test_event(state) do
-    {:reply, :ok, state} = PageSession.handle_call(
-     {:subscribe, "TestEvent", self()},
-     self(),
-     state
-    )
+    {:reply, :ok, state} =
+      PageSession.handle_call(
+        {:subscribe, "TestEvent", self()},
+        self(),
+        state
+      )
 
     state
   end
 
   def fire_test_event(state) do
-    json = Poison.encode!(%{
-      method: "TestEvent"
-    })
+    json =
+      Jason.encode!(%{
+        method: "TestEvent"
+      })
 
     PageSession.handle_info({:message, json}, state)
   end
 
   def spawn_fake_websocket() do
-    spawn_link(fn() ->
+    spawn_link(fn ->
       receive do
         {:"$websockex_send", from, _frame} -> GenServer.reply(from, :ok)
       end
