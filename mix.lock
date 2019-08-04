@@ -6,6 +6,7 @@
   "httpipe": {:hex, :httpipe, "0.9.0", "4db66493b0ec2a86d142ea959a62e221d6ddb23ab48a676b691be3a16c38a415", [:mix], []},
   "httpipe_adapters_hackney": {:hex, :httpipe_adapters_hackney, "0.11.0", "35c31b96fd6fea117f9ba6ca70467ada111dffb9f2fa7fca0bfc7e12bb166e8e", [:mix], [{:hackney, "~> 1.8 or ~> 1.7 or ~> 1.6", [hex: :hackney, optional: false]}, {:httpipe, "~> 0.9.0", [hex: :httpipe, optional: false]}]},
   "idna": {:hex, :idna, "5.1.0", "d72b4effeb324ad5da3cab1767cb16b17939004e789d8c0ad5b70f3cea20c89a", [:rebar3], [{:unicode_util_compat, "0.3.1", [hex: :unicode_util_compat, optional: false]}]},
+  "jason": {:hex, :jason, "1.1.2", "b03dedea67a99223a2eaf9f1264ce37154564de899fd3d8b9a21b1a6fd64afe7", [:mix], [{:decimal, "~> 1.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm"},
   "makeup": {:hex, :makeup, "0.8.0", "9cf32aea71c7fe0a4b2e9246c2c4978f9070257e5c9ce6d4a28ec450a839b55f", [:mix], [{:nimble_parsec, "~> 0.5.0", [hex: :nimble_parsec, repo: "hexpm", optional: false]}], "hexpm"},
   "makeup_elixir": {:hex, :makeup_elixir, "0.13.0", "be7a477997dcac2e48a9d695ec730b2d22418292675c75aa2d34ba0909dcdeda", [:mix], [{:makeup, "~> 0.8", [hex: :makeup, repo: "hexpm", optional: false]}], "hexpm"},
   "metrics": {:hex, :metrics, "1.0.1", "25f094dea2cda98213cecc3aeff09e940299d950904393b2a29d191c346a8486", [:rebar3], []},

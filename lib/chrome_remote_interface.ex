@@ -7,14 +7,14 @@ defmodule ChromeRemoteInterface do
 
   @protocol_env_key "CRI_PROTOCOL_VERSION"
   @protocol_versions ["1-2", "1-3", "tot"]
-  @protocol_version (
-    if (vsn = System.get_env(@protocol_env_key)) in @protocol_versions do
-      vsn
-    else
-      "1-3"
-    end
+  @protocol_version (if (vsn = System.get_env(@protocol_env_key)) in @protocol_versions do
+                       vsn
+                     else
+                       "1-3"
+                     end)
+  IO.puts(
+    "Compiling ChromeRemoteInterface with Chrome DevTools Protocol version: '#{@protocol_version}'"
   )
-  IO.puts("Compiling ChromeRemoteInterface with Chrome DevTools Protocol version: '#{@protocol_version}'")
 
   @doc """
   Gets the current version of the Chrome Debugger Protocol
@@ -25,12 +25,11 @@ defmodule ChromeRemoteInterface do
 
   protocol =
     File.read!("priv/#{@protocol_version}/protocol.json")
-    |> Poison.decode!()
-
+    |> Jason.decode!()
 
   # Generate ChromeRemoteInterface.RPC Modules
 
-  Enum.each(protocol["domains"], fn(domain) ->
+  Enum.each(protocol["domains"], fn domain ->
     defmodule Module.concat(ChromeRemoteInterface.RPC, domain["domain"]) do
       @domain domain
       @moduledoc domain["description"]
@@ -40,10 +39,11 @@ defmodule ChromeRemoteInterface do
       for command <- @domain["commands"] do
         name = command["name"]
         description = command["description"]
+
         arg_doc =
           command["parameters"]
           |> List.wrap()
-          |> Enum.map(fn(param) ->
+          |> Enum.map(fn param ->
             "#{param["name"]} - <#{param["$ref"] || param["type"]}> - #{param["description"]}"
           end)
 
@@ -54,21 +54,26 @@ defmodule ChromeRemoteInterface do
         #{arg_doc}
         """
         def unquote(:"#{name}")(page_pid) do
-          page_pid |> PageSession.execute_command(
+          page_pid
+          |> PageSession.execute_command(
             unquote("#{domain["domain"]}.#{name}"),
             %{},
             []
           )
         end
+
         def unquote(:"#{name}")(page_pid, parameters) do
-          page_pid |> PageSession.execute_command(
+          page_pid
+          |> PageSession.execute_command(
             unquote("#{domain["domain"]}.#{name}"),
             parameters,
             []
           )
         end
+
         def unquote(:"#{name}")(page_pid, parameters, opts) when is_list(opts) do
-          page_pid |> PageSession.execute_command(
+          page_pid
+          |> PageSession.execute_command(
             unquote("#{domain["domain"]}.#{name}"),
             parameters,
             opts

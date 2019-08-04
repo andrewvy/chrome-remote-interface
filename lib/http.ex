@@ -3,10 +3,11 @@ defmodule ChromeRemoteInterface.HTTP do
   This module handles communicating with the DevTools HTTP JSON API.
   """
 
-  @type success_http_response :: {:ok, Map.t}
+  @type success_http_response :: {:ok, Map.t()}
   @type error_http_response :: {:error, any()}
 
-  @spec call(ChromeRemoteInterface.Server.t, String.t) :: success_http_response | error_http_response
+  @spec call(ChromeRemoteInterface.Server.t(), String.t()) ::
+          success_http_response | error_http_response
   def call(server, path) do
     server
     |> execute_request(path)
@@ -22,15 +23,15 @@ defmodule ChromeRemoteInterface.HTTP do
   end
 
   defp execute_request(server, path) do
-    :hackney.request(:get, http_url(server, path), [], <<>>, [path_encode_fun: &(&1)])
+    :hackney.request(:get, http_url(server, path), [], <<>>, path_encode_fun: & &1)
   end
 
   defp handle_response({:ok, status_code, _response_headers, client_ref}) do
     with true <- status_code >= 200 && status_code < 300,
-      {:ok, body} <- :hackney.body(client_ref),
-      {:ok, formatted_body} <- format_body(body),
-      {:ok, json} <- decode(formatted_body) do
-        {:ok, json}
+         {:ok, body} <- :hackney.body(client_ref),
+         {:ok, formatted_body} <- format_body(body),
+         {:ok, json} <- decode(formatted_body) do
+      {:ok, json}
     else
       error -> error
     end
@@ -48,7 +49,7 @@ defmodule ChromeRemoteInterface.HTTP do
   defp format_body(body), do: {:ok, body}
 
   defp decode(body) do
-    case Poison.decode(body) do
+    case Jason.decode(body) do
       {:ok, json} -> {:ok, json}
       {:error, _reason} -> {:ok, body}
     end
