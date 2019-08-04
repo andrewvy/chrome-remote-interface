@@ -1,5 +1,6 @@
 defmodule ChromeRemoteInterface.Websocket do
   require Logger
+
   use WebSockex
 
   def start_link(url) do

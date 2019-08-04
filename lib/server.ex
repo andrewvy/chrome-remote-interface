@@ -5,7 +5,7 @@ defmodule ChromeRemoteInterface.Server do
   ]
 
   @type t :: %__MODULE__{
-    host: String.t,
-    port: non_neg_integer() | String.t
-  }
+          host: String.t(),
+          port: non_neg_integer() | String.t()
+        }
 end
