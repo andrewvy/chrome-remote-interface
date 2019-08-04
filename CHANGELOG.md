@@ -6,4 +6,6 @@
 
 ### Bug Fixes
 
+  * [README] Fix `list_page` -> `list_pages` in README.md (#23)
+
 ### Deprecations
