@@ -49,7 +49,7 @@ defmodule ChromeRemoteInterface.Session do
   end
 
   @doc """
-  <documentation needed>
+  documentation needed!
 
   Calls `/json/activate/:id`.
   """
