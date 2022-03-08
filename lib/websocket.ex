@@ -11,4 +11,13 @@ defmodule ChromeRemoteInterface.Websocket do
     send(state, {:message, frame_data})
     {:ok, state}
   end
+
+  def handle_disconnect(_status, state) do
+    Process.exit(state, :remote_closed)
+    {:ok, state}
+  end
+
+  def terminate({:remote, :closed}, _state) do
+    :stop
+  end
 end

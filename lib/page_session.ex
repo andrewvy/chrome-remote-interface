@@ -119,6 +119,7 @@ defmodule ChromeRemoteInterface.PageSession do
   # ---
 
   def init(url) do
+    Process.flag(:trap_exit, true)
     {:ok, socket} = ChromeRemoteInterface.Websocket.start_link(url)
 
     state = %__MODULE__{
@@ -282,8 +283,16 @@ defmodule ChromeRemoteInterface.PageSession do
     |> Enum.each(&send(&1, event))
   end
 
-  def terminate(_reason, state) do
-    Process.exit(state.socket, :kill)
+  # handle the trapped exit call
+  def handle_info({:EXIT, from, reason}, %{socket: socket} = state) do
+    cleanup(reason, state)
+    {:stop, reason, state} # see GenServer docs for other return types
+  end
+
+  def terminate(reason, state) do
+    cleanup(reason, state)
     :stop
   end
+
+  def cleanup(reason, state), do: Process.exit(state.socket, reason)
 end
