@@ -45,7 +45,7 @@ defmodule ChromeRemoteInterface.Session do
   @spec new_page(Server.t()) :: HTTP.success_http_response() | HTTP.error_http_response()
   def new_page(server) do
     server
-    |> HTTP.call("/json/new")
+    |> HTTP.call("/json/new", method: :put)
   end
 
   @doc """
