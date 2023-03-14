@@ -6,11 +6,13 @@ defmodule ChromeRemoteInterface.HTTP do
   @type success_http_response :: {:ok, Map.t()}
   @type error_http_response :: {:error, any()}
 
-  @spec call(ChromeRemoteInterface.Server.t(), String.t()) ::
+  @spec call(ChromeRemoteInterface.Server.t(), String.t(), [method: :get | :put]) ::
           success_http_response | error_http_response
-  def call(server, path) do
+  def call(server, path, opts \\ []) do
+    method = Keyword.get(opts, :method, :get)
+
     server
-    |> execute_request(path)
+    |> execute_request(method, path)
     |> handle_response()
   end
 
@@ -22,8 +24,8 @@ defmodule ChromeRemoteInterface.HTTP do
     "http://#{server.host}:#{server.port}#{path}"
   end
 
-  defp execute_request(server, path) do
-    :hackney.request(:get, http_url(server, path), [], <<>>, path_encode_fun: & &1)
+  defp execute_request(server, method, path) when method in [:get, :put] do
+    :hackney.request(method, http_url(server, path), [], <<>>, path_encode_fun: & &1)
   end
 
   defp handle_response({:ok, status_code, _response_headers, client_ref}) do
