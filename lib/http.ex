@@ -22,7 +22,7 @@ defmodule ChromeRemoteInterface.HTTP do
     "http://#{server.host}:#{server.port}#{path}"
   end
 
-  defp execute_request(server, path, opts \\ []) do
+  defp execute_request(server, path, opts) do
     verb = opts[:verb] || :get
     :hackney.request(verb, http_url(server, path), [], <<>>, path_encode_fun: & &1)
   end
