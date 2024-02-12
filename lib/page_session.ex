@@ -90,28 +90,29 @@ defmodule ChromeRemoteInterface.PageSession do
   """
   def execute_command(pid, method, params, opts) do
     async = Keyword.get(opts, :async, false)
+    session_id = Keyword.get(opts, :session_id, nil)
     timeout = Keyword.get(opts, :timeout, 5_000)
 
     case async do
-      false -> call(pid, method, params, timeout)
-      true -> cast(pid, method, params, self())
-      from when is_pid(from) -> cast(pid, method, params, from)
+      false -> call(pid, method, params, session_id, timeout)
+      true -> cast(pid, method, params, session_id, self())
+      from when is_pid(from) -> cast(pid, method, params, session_id, from)
     end
   end
 
   @doc """
   Executes a raw JSON RPC command through Websockets.
   """
-  def call(pid, method, params, timeout) do
-    GenServer.call(pid, {:call_command, method, params}, timeout)
+  def call(pid, method, params, session_id, timeout) do
+    GenServer.call(pid, {:call_command, method, params, session_id}, timeout)
   end
 
   @doc """
   Executes a raw JSON RPC command through Websockets, but sends the
   response as a message to the requesting process.
   """
-  def cast(pid, method, params, from \\ self()) do
-    GenServer.cast(pid, {:cast_command, method, params, from})
+  def cast(pid, method, params, session_id, from \\ self()) do
+    GenServer.cast(pid, {:cast_command, method, params, from, session_id})
   end
 
   # ---
@@ -129,8 +130,8 @@ defmodule ChromeRemoteInterface.PageSession do
     {:ok, state}
   end
 
-  def handle_cast({:cast_command, method, params, from}, state) do
-    send(self(), {:send_rpc_request, state.ref_id, state.socket, method, params})
+  def handle_cast({:cast_command, method, params, from, session_id}, state) do
+    send(self(), {:send_rpc_request, state.ref_id, state.socket, method, params, session_id})
 
     new_state =
       state
@@ -140,8 +141,8 @@ defmodule ChromeRemoteInterface.PageSession do
     {:noreply, new_state}
   end
 
-  def handle_call({:call_command, method, params}, from, state) do
-    send(self(), {:send_rpc_request, state.ref_id, state.socket, method, params})
+  def handle_call({:call_command, method, params, session_id}, from, state) do
+    send(self(), {:send_rpc_request, state.ref_id, state.socket, method, params, session_id})
 
     new_state =
       state
@@ -220,12 +221,19 @@ defmodule ChromeRemoteInterface.PageSession do
     {:noreply, %{state | callbacks: callbacks}}
   end
 
-  def handle_info({:send_rpc_request, ref_id, socket, method, params}, state) do
+  def handle_info({:send_rpc_request, ref_id, socket, method, params, session_id}, state) do
     message = %{
       "id" => ref_id,
       "method" => method,
       "params" => params
     }
+
+    message =
+      if session_id != nil do
+        Map.merge(message, %{"sessionId" => session_id})
+      else
+        message
+      end
 
     json = Jason.encode!(message)
     WebSockex.send_frame(socket, {:text, json})
